@@ -3,8 +3,13 @@ import { ZodTypeProvider } from "fastify-type-provider-zod";
 import z from "zod";
 import { prisma } from "../lib/prisma";
 import dayjs from "dayjs";
+import 'dayjs/locale/pt-br'
+import locallizedFormat from 'dayjs/plugin/localizedFormat'
 import nodemailer from "nodemailer";
 import { getMailClient } from "../lib/mail";
+
+dayjs.locale('pt-br')
+dayjs.extend(locallizedFormat);
 
 export async function createTrip(app: FastifyInstance){
     app.withTypeProvider<ZodTypeProvider>().post('/trips', {
@@ -52,6 +57,11 @@ export async function createTrip(app: FastifyInstance){
             }
             })
 
+        const formattedStartDate = dayjs(starts_at).format('LL');
+        const formattedEndDate = dayjs(ends_at).format('LL');
+
+        const confirmationLink = `http://localhost:3333/trips/${trip.id}/confirm`
+
         const mail = await getMailClient()
 
         const message = await mail.sendMail({
@@ -63,8 +73,19 @@ export async function createTrip(app: FastifyInstance){
                 name: owner_name,
                 address: owner_email
             },
-            subject: 'Trip Created',
-            html: "<p> Teste de envio de e-mail </p>"
+            subject: `Confirme sua viagem para ${destination} em ${starts_at}`,
+            html: `
+            <div style="font-family: sans-serif; font-size: 16px; line-height: 1.6;">
+                <p>Você foi convidado(a) para participar de uma viagem para <strong>${destination}</strong> nas datas de <strong>${formattedStartDate}</strong> até <strong>${formattedEndDate}</strong>.</p>
+                <p></p>
+                <p>Para confirmar sua presença na viagem, clique no link abaixo:</p>
+                <p></p>
+                <p>
+                <a href="${confirmationLink}">Confirmar viagem</a>
+                </p>
+                <p>Caso você não saiba do que se trata esse e-mail, apenas ignore esse e-mail.</p>
+            </div>
+            `.trim(),
         });
 
         console.log(nodemailer.getTestMessageUrl(message));
