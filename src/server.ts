@@ -14,6 +14,7 @@ import { updateTrip } from "./routes/update-trip";
 import { getTripDetails } from "./routes/get-trip-details";
 import { getParticipant } from "./routes/get-participant";
 import { errorHandler } from "./error-handler";
+import { env } from './env'
 
 const app = fastity()
 
@@ -43,6 +44,6 @@ app.register(getParticipant)
 
 
 
-app.listen({ port: 3333 }).then(() => {
-    console.log("Server is running on port 3333")
+app.listen({ port: env.PORT }).then(() => {
+    console.log(`Server is running on port ${env.PORT}`)
 })
